@@ -14,8 +14,8 @@ const notFoundResponse = (res, message) => {
     return res.status(404).json({ success: false, message });
 };
 
-const internalErrorResponse = (res, message) => {
-    return res.status(500).json({ success: false, message });
+const internalErrorResponse = (res, message, statusCode = 500) => {
+    return res.status(statusCode).json({ success: false, message });
 };
 
 module.exports = {

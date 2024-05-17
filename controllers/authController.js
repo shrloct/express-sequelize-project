@@ -1,40 +1,38 @@
-const { comparePassword, hashPassword } = require('../config/bcrypt');
 const generateToken = require('../config/generateToken');
+const { comparePassword, hashPassword } = require('../config/bcrypt');
 const { errorResponse, successResponse, internalErrorResponse, notFoundResponse } = require('../config/response');
 const { users } = require('../models');
 
-// membuat sebuah register controller
+
 async function register(req, res) {
-    const { username, email, password } = req.body;
     try {
-        // Check email sudah ada atau belum
-        // jika sudah ada maka tidak boleh terisi kembali
-        const existingEmail = await users.findOne({ where: { email } });
-        if (existingEmail) {
+        const { name, email, password } = req.body;
+        // Check if user already exists
+        const existingUser = await users.findOne({ where: { email } });
+        if (existingUser) {
             errorResponse(res, 'User already exists', 400);
         }
 
-        // Jika belum ada, maka dibuat
+        // Hash the password
         const hashedPassword = await hashPassword(password);
 
-        // insert into users (usaername, email, password) values (?, ?, ?)
-        const user = await users.create({
-            username,
+        // Create new user
+        const newUser = await users.create({
+            name,
             email,
             password: hashedPassword
         });
 
         const userResponse = {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt
+            id: newUser.id,
+            name: newUser.name,
+            email: newUser.email,
+            createdAt: newUser.createdAt,
+            updatedAt: newUser.updatedAt
         };
 
-        successResponse(res, 'Registered successfully', userResponse, 201);
+        successResponse(res, 'User registered successfully', userResponse, 201);
     } catch (error) {
-        console.error(error);
         internalErrorResponse(res, error);
     }
 };
@@ -56,8 +54,8 @@ async function login(req, res) {
         }
 
         const userResponse = {
-            id: user.id,
-            username: user.username,
+            id: user,
+            name: user.name,
             email: user.email,
         };
 
@@ -75,7 +73,7 @@ async function login(req, res) {
 async function me(req, res) {
     try {
         const user = await users.findByPk(req.user.id, {
-            attributes: ['id', 'username', 'email']
+            attributes: ['id', 'name', 'email']
         });
         if (!user) {
             errorResponse(res, 'User not found', 404);
